@@ -161,8 +161,6 @@ Partial Class Form1
         'CheckBox2
         '
         Me.CheckBox2.AutoSize = True
-        Me.CheckBox2.Checked = True
-        Me.CheckBox2.CheckState = System.Windows.Forms.CheckState.Checked
         Me.CheckBox2.Enabled = False
         Me.CheckBox2.Location = New System.Drawing.Point(7, 23)
         Me.CheckBox2.Name = "CheckBox2"
@@ -231,6 +229,7 @@ Partial Class Form1
         Me.Name = "Form1"
         Me.RightToLeftLayout = True
         Me.Text = "SKBuilder"
+        Me.TopMost = True
         Me.GroupBox1.ResumeLayout(False)
         Me.GroupBox1.PerformLayout()
         Me.GroupBox2.ResumeLayout(False)
