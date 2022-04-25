@@ -70,26 +70,26 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="NXOpen">
-      <HintPath>..\..\..\..\..\..\Apps\Siemens\NX1973\NXBIN\managed\NXOpen.dll</HintPath>
+      <HintPath>dll\NXOpen.dll</HintPath>
     </Reference>
     <Reference Include="NXOpen.Guide">
-      <HintPath>..\..\..\..\..\..\Apps\Siemens\NX1973\NXBIN\managed\NXOpen.Guide.dll</HintPath>
+      <HintPath>dll\NXOpen.Guide.dll</HintPath>
     </Reference>
     <Reference Include="NXOpen.UF">
-      <HintPath>..\..\..\..\..\..\Apps\Siemens\NX1973\NXBIN\managed\NXOpen.UF.dll</HintPath>
+      <HintPath>dll\NXOpen.UF.dll</HintPath>
     </Reference>
     <Reference Include="NXOpen.Utilities">
-      <HintPath>..\..\..\..\..\..\Apps\Siemens\NX1973\NXBIN\managed\NXOpen.Utilities.dll</HintPath>
+      <HintPath>dll\NXOpen.Utilities.dll</HintPath>
     </Reference>
     <Reference Include="NXOpenUI">
-      <HintPath>..\..\..\..\..\..\Apps\Siemens\NX1973\NXBIN\managed\NXOpenUI.dll</HintPath>
+      <HintPath>dll\NXOpenUI.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Deployment" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\..\..\..\Documents\System.ValueTuple.dll</HintPath>
+      <HintPath>dll\System.ValueTuple.dll</HintPath>
     </Reference>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
@@ -112,11 +112,6 @@
     <Compile Include="Form1.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="My Project\Resources.Designer.vb">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
     <Compile Include="My Project\Settings.Designer.vb">
       <AutoGen>True</AutoGen>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
@@ -128,11 +123,6 @@
   <ItemGroup>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.vb</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="My Project\Resources.resx">
-      <CustomToolNamespace>My.Resources</CustomToolNamespace>
-      <Generator>VbMyResourcesResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.vb</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

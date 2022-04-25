@@ -1,6 +1,6 @@
 ﻿Public Class Unload
 
-    Public Shared Function GetUnloadOption(ByVal dummy As String) As Integer
+    Public Shared Function GetUnloadOption() As Integer
 
         Dim unloadOption As Integer
 
