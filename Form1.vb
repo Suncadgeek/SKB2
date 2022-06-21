@@ -54,27 +54,64 @@ Public Class Form1
         Dim boundArray(1000) As String
         Dim fileName As String = "model"
         SD = 0 : CL = 0
+        Dim myoffset As Integer
+        Dim CellsDictionnary As New Dictionary(Of String, Integer)
+        Dim cellName As String
+        If CheckBox3.Checked = True Then
+            Dim i As Integer = 2
 
+            Do
+                cellName = xlWorkSheet.Cells(i, 5).value
+                If CellsDictionnary.ContainsKey(cellName) Then
+                    CellsDictionnary.Item(cellName) += 1
+                Else
+                    CellsDictionnary.Add(cellName, 1)
+                End If
+                i += 1
+            Loop While xlWorkSheet.Cells(i, 5).value <> ""
+            'définir boundarray a partir du dictionnaire de cellule
+            myoffset = 2
+            Dim j As Integer = 0
+            boundArray(j) = myoffset
+            For Each item In CellsDictionnary
+                'creer boundarray ici
+                j += 1
+                boundArray(j) = item.Value + myoffset - 1
 
-        If CheckBox1.Checked = False Then
+                myoffset += item.Value
+            Next
+            fileNbr = j
 
-            boundArray(0) = CInt(TextBox2.Text)
-            boundArray(1) = CInt(TextBox3.Text)
-            fileNbr = 1
 
         Else
-            If Strings.Right(TextBox5.Text, 1) = ";" Then
-                MsgBox("Erreur d'entrée, le code ne peut pas terminer par un ;")
-                Exit Sub
-            End If
-            boundArray = Split(TextBox5.Text, ";")
-            If (fileNbr \ 2) * 2 = fileNbr Then
-                MsgBox("Erreur d'entrée, le code doit contenir un nombre paire de sections")
-                Exit Sub
+
+
+            If CheckBox1.Checked = False Then
+
+                boundArray(0) = CInt(TextBox2.Text)
+                boundArray(1) = CInt(TextBox3.Text)
+                fileNbr = 1
+
+            Else
+                If Strings.Right(TextBox5.Text, 1) = ";" Then
+                    MsgBox("Erreur d'entrée, le code ne peut pas terminer par un ;")
+                    Exit Sub
+                End If
+                boundArray = Split(TextBox5.Text, ";")
+                If (fileNbr \ 2) * 2 = fileNbr Then
+                    MsgBox("Erreur d'entrée, le code doit contenir un nombre paire de sections")
+                    Exit Sub
+                End If
             End If
         End If
+        Dim mystep As Integer
+        If CheckBox3.Checked = True Then
+            mystep = 1
+        Else
+            mystep = 1
+        End If
 
-        For fileIndex = 1 To fileNbr Step 2
+        For fileIndex = 1 To fileNbr Step mystep
 
             StrtRng = boundArray(fileIndex - 1)
             EndRng = boundArray(fileIndex)
@@ -98,24 +135,30 @@ Public Class Form1
             fileNew1.ItemType = ""
             fileNew1.Specialization = ""
             fileNew1.SetCanCreateAltrep(False)
-            If StrtRng = EndRng Then
-                fileName = "ANS-SD-"
-                SD += 1
-                fileNew1.NewFileName = outputdir & "\" & fileName & SD.ToString & ".prt"
+
+            If CheckBox3.Checked = True Then
+                fileName = xlWorkSheet.Cells(StrtRng + 2, 5).value.ToString
+                fileNew1.NewFileName = outputdir & "\" & fileName & ".prt"
 
             Else
-                fileName = "ANS-SC-"
-                CL += 1
-                fileNew1.NewFileName = outputdir & "\" & fileName & CL.ToString & ".prt"
+
+                If StrtRng = EndRng Then
+                    fileName = "ANS-SD-"
+                    SD += 1
+                    fileNew1.NewFileName = outputdir & "\" & fileName & SD.ToString & ".prt"
+
+                Else
+                    fileName = "ANS-SC-"
+                    CL += 1
+                    fileNew1.NewFileName = outputdir & "\" & fileName & CL.ToString & ".prt"
+                End If
+
             End If
 
             If System.IO.File.Exists(outputdir & "\" & fileName) Then
                 MsgBox("Un fichier existe déjà. Abandon...")
                 End
             End If
-
-
-
 
             fileNew1.MasterFileName = ""
             fileNew1.MakeDisplayedPart = True
@@ -200,12 +243,14 @@ Public Class Form1
             GroupBox2.Enabled = True
             TextBox5.Enabled = True
             CheckBox2.Enabled = True
+            CheckBox3.Enabled = True
         Else
             GroupBox1.Enabled = True
             GroupBox2.Enabled = False
             TextBox5.Enabled = False
             CheckBox2.Enabled = False
             CheckBox2.Checked = False
+            CheckBox3.Enabled = False
         End If
     End Sub
 
@@ -223,7 +268,7 @@ Public Class Form1
 
         If System.IO.File.Exists(configfilepath) Then 'le fichier existe on remplit le form
             Dim sr As New System.IO.StreamReader(configfilepath)
-            Dim configr(6) As String
+            Dim configr(7) As String
 
 
             TextBox1.Text = sr.ReadLine()
@@ -233,7 +278,7 @@ Public Class Form1
             TextBox5.Text = sr.ReadLine()
             If sr.ReadLine = "True" Then CheckBox1.Checked = True : Else CheckBox1.Checked = False
             If sr.ReadLine = "True" Then CheckBox2.Checked = True : Else CheckBox2.Checked = False
-
+            If sr.ReadLine = "True" Then CheckBox3.Checked = True : Else CheckBox3.Checked = False
 
             sr.Close()
 
@@ -245,7 +290,7 @@ Public Class Form1
         Dim sw As New System.IO.StreamWriter(configfilepath) 'le fichier est ensuite sauvegardé
         Dim i As Integer
         sw.Flush()
-        Dim configw(6) As String
+        Dim configw(7) As String
         configw(0) = TextBox1.Text
         configw(1) = TextBox2.Text
         configw(2) = TextBox3.Text
@@ -253,8 +298,10 @@ Public Class Form1
         configw(4) = TextBox5.Text
         configw(5) = CheckBox1.Checked.ToString
         configw(6) = CheckBox2.Checked.ToString
+        configw(7) = CheckBox3.Checked.ToString
 
-        For i = 0 To 6
+
+        For i = 0 To 7
             sw.WriteLine(configw(i))
         Next
         sw.Close()
@@ -268,6 +315,14 @@ Public Class Form1
 
     Private Sub Form1_Closed(sender As Object, e As EventArgs) Handles Me.Closed
         Call Write_config()
+    End Sub
+
+    Private Sub CheckBox3_CheckedChanged(sender As Object, e As EventArgs) Handles CheckBox3.CheckedChanged
+        If CheckBox3.Checked = True Then TextBox5.Enabled = False Else TextBox5.Enabled = True
+    End Sub
+
+    Private Sub CheckBox2_CheckedChanged(sender As Object, e As EventArgs) Handles CheckBox2.CheckedChanged
+        If CheckBox2.Checked = False Then TextBox5.Enabled = True Else TextBox5.Enabled = False
     End Sub
 End Class
 
