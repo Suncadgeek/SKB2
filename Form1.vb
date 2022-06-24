@@ -54,14 +54,14 @@ Public Class Form1
         Dim boundArray(1000) As String
         Dim fileName As String = "model"
         SD = 0 : CL = 0
-        Dim myoffset As Integer
+
         Dim CellsDictionnary As New Dictionary(Of String, Integer)
         Dim cellName As String
-        If CheckBox3.Checked = True Then
+        If CheckBox3.Checked And CheckBox1.Checked Then
             Dim i As Integer = 2
 
             Do
-                cellName = xlWorkSheet.Cells(i, 5).value
+                cellName = xlWorkSheet.Cells(i, 5).value & xlWorkSheet.Cells(i, 6).value
                 If CellsDictionnary.ContainsKey(cellName) Then
                     CellsDictionnary.Item(cellName) += 1
                 Else
@@ -70,16 +70,14 @@ Public Class Form1
                 i += 1
             Loop While xlWorkSheet.Cells(i, 5).value <> ""
             'définir boundarray a partir du dictionnaire de cellule
-            myoffset = 2
             Dim j As Integer = 0
-            boundArray(j) = myoffset
+            Dim myoffset As Integer = 2
             For Each item In CellsDictionnary
-                'creer boundarray ici
-                j += 1
-                boundArray(j) = item.Value + myoffset - 1
-
-                myoffset += item.Value
-            Next
+                boundArray(j) = myoffset
+                boundArray(j + 1) = boundArray(j) + item.Value - 1
+                myoffset = boundArray(j + 1) + 1
+                j += 2
+            Next item
             fileNbr = j
 
 
@@ -104,19 +102,17 @@ Public Class Form1
                 End If
             End If
         End If
-        Dim mystep As Integer
-        If CheckBox3.Checked = True Then
-            mystep = 1
-        Else
-            mystep = 1
-        End If
+        Dim mystep As Integer = 2
+        'If CheckBox3.Checked And CheckBox1.Checked Then mystep = 2 Else mystep = 1
+
+
+        Dim tableSectioName() As String = Split(TextBox6.Text, ";")
+
 
         For fileIndex = 1 To fileNbr Step mystep
 
             StrtRng = boundArray(fileIndex - 1)
             EndRng = boundArray(fileIndex)
-
-            'If StrtRng > 1 And EndRng < 998 And StrtRng < EndRng Then
 
 
             Dim outputdir As String = TextBox4.Text
@@ -137,7 +133,8 @@ Public Class Form1
             fileNew1.SetCanCreateAltrep(False)
 
             If CheckBox3.Checked = True Then
-                fileName = xlWorkSheet.Cells(StrtRng + 2, 5).value.ToString
+                'fileName = xlWorkSheet.Cells(StrtRng + 2, 5).value.ToString
+                fileName = tableSectioName((fileIndex - 1) / 2)
                 fileNew1.NewFileName = outputdir & "\" & fileName & ".prt"
 
             Else
@@ -268,7 +265,7 @@ Public Class Form1
 
         If System.IO.File.Exists(configfilepath) Then 'le fichier existe on remplit le form
             Dim sr As New System.IO.StreamReader(configfilepath)
-            Dim configr(7) As String
+            Dim configr(8) As String
 
 
             TextBox1.Text = sr.ReadLine()
@@ -276,9 +273,10 @@ Public Class Form1
             TextBox3.Text = sr.ReadLine()
             TextBox4.Text = sr.ReadLine()
             TextBox5.Text = sr.ReadLine()
-            If sr.ReadLine = "True" Then CheckBox1.Checked = True : Else CheckBox1.Checked = False
-            If sr.ReadLine = "True" Then CheckBox2.Checked = True : Else CheckBox2.Checked = False
-            If sr.ReadLine = "True" Then CheckBox3.Checked = True : Else CheckBox3.Checked = False
+            TextBox6.Text = sr.ReadLine()
+            CheckBox1.Checked = sr.ReadLine()
+            CheckBox2.Checked = sr.ReadLine()
+            CheckBox3.Checked = sr.ReadLine()
 
             sr.Close()
 
@@ -290,23 +288,24 @@ Public Class Form1
         Dim sw As New System.IO.StreamWriter(configfilepath) 'le fichier est ensuite sauvegardé
         Dim i As Integer
         sw.Flush()
-        Dim configw(7) As String
+        Dim configw(8) As String
         configw(0) = TextBox1.Text
         configw(1) = TextBox2.Text
         configw(2) = TextBox3.Text
         configw(3) = TextBox4.Text
         configw(4) = TextBox5.Text
-        configw(5) = CheckBox1.Checked.ToString
-        configw(6) = CheckBox2.Checked.ToString
-        configw(7) = CheckBox3.Checked.ToString
+        configw(5) = TextBox6.Text
+        configw(6) = CheckBox1.Checked.ToString
+        configw(7) = CheckBox2.Checked.ToString
+        configw(8) = CheckBox3.Checked.ToString
 
 
-        For i = 0 To 7
+        For i = 0 To 8
             sw.WriteLine(configw(i))
         Next
         sw.Close()
     End Sub
-    Private Sub TextBox5_TextChanged(sender As Object, e As EventArgs) Handles TextBox5.TextChanged
+    Private Sub TextBox5_TextChanged(sender As Object, e As EventArgs) Handles TextBox5.TextChanged, TextBox6.TextChanged
 
         TextBox5.Text = System.Text.RegularExpressions.Regex.Replace(TextBox5.Text, "[^\d;]", "")    'Removes all character except numbers
         TextBox5.Select(TextBox5.Text.Length + 1, 1)    'To bring the textbox focus to the right
@@ -319,10 +318,12 @@ Public Class Form1
 
     Private Sub CheckBox3_CheckedChanged(sender As Object, e As EventArgs) Handles CheckBox3.CheckedChanged
         If CheckBox3.Checked = True Then TextBox5.Enabled = False Else TextBox5.Enabled = True
+        If CheckBox3.Checked = False Then TextBox6.Enabled = False Else TextBox6.Enabled = True
     End Sub
 
     Private Sub CheckBox2_CheckedChanged(sender As Object, e As EventArgs) Handles CheckBox2.CheckedChanged
-        If CheckBox2.Checked = False Then TextBox5.Enabled = True Else TextBox5.Enabled = False
+        'If CheckBox2.Checked = False Then TextBox5.Enabled = True Else TextBox5.Enabled = False
+
     End Sub
 End Class
 
