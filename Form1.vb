@@ -118,84 +118,42 @@ Public Class Form1
             Dim outputdir As String = TextBox4.Text
 
 
-            Dim fileNew1 As NXOpen.FileNew = Nothing
-            fileNew1 = theSession.Parts.FileNew()
-            fileNew1.TemplateFileName = "model-plain-1-mm-template.prt"
-            fileNew1.UseBlankTemplate = False
-            fileNew1.ApplicationName = "ModelTemplate"
-            fileNew1.Units = NXOpen.Part.Units.Millimeters
-            fileNew1.RelationType = ""
-            fileNew1.UsesMasterModel = "No"
-            fileNew1.TemplateType = NXOpen.FileNewTemplateType.Item
-            fileNew1.TemplatePresentationName = "Modèle"
-            fileNew1.ItemType = ""
-            fileNew1.Specialization = ""
-            fileNew1.SetCanCreateAltrep(False)
+            Dim success As Integer
+            'Dim filename As String
+
+
+
+
 
             If CheckBox3.Checked = True Then
                 'fileName = xlWorkSheet.Cells(StrtRng + 2, 5).value.ToString
                 fileName = tableSectioName((fileIndex - 1) / 2)
-                fileNew1.NewFileName = outputdir & "\" & fileName & ".prt"
-
+                success = NewPart(filename)
             Else
 
                 If StrtRng = EndRng Then
                     fileName = "ANS-SD-"
                     SD += 1
-                    fileNew1.NewFileName = outputdir & "\" & fileName & SD.ToString & ".prt"
+                    success = NewPart(filename & SD.ToString)
 
                 Else
                     fileName = "ANS-SC-"
                     CL += 1
-                    fileNew1.NewFileName = outputdir & "\" & fileName & CL.ToString & ".prt"
+                    success = NewPart(filename & CL.ToString & ".prt")
                 End If
 
             End If
 
-            If System.IO.File.Exists(outputdir & "\" & fileName) Then
-                MsgBox("Un fichier existe déjà. Abandon...")
-                End
-            End If
-
-            fileNew1.MasterFileName = ""
-            fileNew1.MakeDisplayedPart = True
-            fileNew1.DisplayPartOption = NXOpen.DisplayPartOption.AllowAdditional
-            Dim nXObject1 As NXOpen.NXObject = Nothing
-            nXObject1 = fileNew1.Commit()
-            theSession.ApplicationSwitchImmediate("UG_APP_MODELING")
-
-
-            Dim workPart As NXOpen.Part = theSession.Parts.Work
-            Dim displayPart As NXOpen.Part = theSession.Parts.Display
-
-
-            Dim markId1 As NXOpen.Session.UndoMarkId = Nothing
-            markId1 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Invisible, "Delete")
-            Dim notifyOnDelete1 As Boolean = Nothing
-            notifyOnDelete1 = theSession.Preferences.Modeling.NotifyOnDelete
-            theSession.UpdateManager.ClearErrorList()
-            Dim markId2 As NXOpen.Session.UndoMarkId = Nothing
-            markId2 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Delete")
-            Dim objects1(0) As NXOpen.TaggedObject
-            Dim datumCsys1 As NXOpen.Features.DatumCsys = CType(workPart.Features.FindObject("DATUM_CSYS(0)"), NXOpen.Features.DatumCsys)
-            objects1(0) = datumCsys1
-            Dim nErrs1 As Integer = Nothing
-            nErrs1 = theSession.UpdateManager.AddObjectsToDeleteList(objects1)
-            Dim notifyOnDelete2 As Boolean = Nothing
-            notifyOnDelete2 = theSession.Preferences.Modeling.NotifyOnDelete
-            Dim nErrs2 As Integer = Nothing
-            nErrs2 = theSession.UpdateManager.DoUpdate(markId2)
-            theSession.DeleteUndoMark(markId1, Nothing)
-
-
-
+            'If System.IO.File.Exists(outputdir & "\" & fileName) Then
+            'MsgBox("Un fichier existe déjà. Abandon...")
+            'End
+            'End If
 
 
 
 
             SKBuilder(xlWorkSheet, StrtRng, EndRng)
 
-            fileNew1.Destroy()
         Next
 
 
@@ -325,5 +283,170 @@ Public Class Form1
         'If CheckBox2.Checked = False Then TextBox5.Enabled = True Else TextBox5.Enabled = False
 
     End Sub
+
+    Private Sub TextBox4_TextChanged(sender As Object, e As EventArgs) Handles TextBox4.TextChanged
+
+    End Sub
+    Function NewPart(partname As String)
+        Dim markId1 As NXOpen.Session.UndoMarkId = Nothing
+        markId1 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Départ")
+
+        Dim fileNew1 As NXOpen.FileNew = Nothing
+        fileNew1 = theSession.Parts.FileNew()
+
+        fileNew1.TemplateFileName = "@DB/000120/A"
+
+        fileNew1.UseBlankTemplate = False
+
+        fileNew1.ApplicationName = "ModelTemplate"
+
+        fileNew1.Units = NXOpen.Part.Units.Millimeters
+
+        fileNew1.RelationType = "master"
+
+        fileNew1.UsesMasterModel = "No"
+
+        fileNew1.TemplateType = NXOpen.FileNewTemplateType.Item
+
+        fileNew1.TemplatePresentationName = "Modèle"
+
+        fileNew1.ItemType = "SO8_CAD"
+
+        fileNew1.Specialization = ""
+
+        fileNew1.SetCanCreateAltrep(False)
+
+        Dim partOperationCreateBuilder1 As NXOpen.PDM.PartOperationCreateBuilder = Nothing
+        partOperationCreateBuilder1 = theSession.PdmSession.CreateCreateOperationBuilder(NXOpen.PDM.PartOperationBuilder.OperationType.Create)
+
+        fileNew1.SetPartOperationCreateBuilder(partOperationCreateBuilder1)
+
+        partOperationCreateBuilder1.SetOperationSubType(NXOpen.PDM.PartOperationCreateBuilder.OperationSubType.FromTemplate)
+
+        partOperationCreateBuilder1.SetModelType("master")
+
+        partOperationCreateBuilder1.SetItemType("SO8_CAD")
+
+        Dim logicalobjects1() As NXOpen.PDM.LogicalObject
+        partOperationCreateBuilder1.CreateLogicalObjects(logicalobjects1)
+
+        Dim sourceobjects1() As NXOpen.NXObject
+        sourceobjects1 = logicalobjects1(0).GetUserAttributeSourceObjects()
+
+        partOperationCreateBuilder1.DefaultDestinationFolder = ":Newstuff"
+
+        Dim sourceobjects2() As NXOpen.NXObject
+        sourceobjects2 = logicalobjects1(0).GetUserAttributeSourceObjects()
+
+        partOperationCreateBuilder1.SetOperationSubType(NXOpen.PDM.PartOperationCreateBuilder.OperationSubType.FromTemplate)
+
+        theSession.SetUndoMarkName(markId1, "Boîte de dialogue Nouvel élément")
+
+        Dim attributetitles1(0) As String
+        attributetitles1(0) = "DB_PART_NO"
+        Dim titlepatterns1(0) As String
+        titlepatterns1(0) = """CAO""nnnnnnnnn"
+        Dim nXObject1 As NXOpen.NXObject = Nothing
+        nXObject1 = partOperationCreateBuilder1.CreateAttributeTitleToNamingPatternMap(attributetitles1, titlepatterns1)
+
+        Dim objects1(0) As NXOpen.NXObject
+        objects1(0) = logicalobjects1(0)
+        Dim properties1(0) As NXOpen.NXObject
+        properties1(0) = nXObject1
+        Dim errorList1 As NXOpen.ErrorList = Nothing
+        errorList1 = partOperationCreateBuilder1.AutoAssignAttributesWithNamingPattern(objects1, properties1)
+
+        errorList1.Dispose()
+        Dim errorMessageHandler1 As NXOpen.PDM.ErrorMessageHandler = Nothing
+        errorMessageHandler1 = partOperationCreateBuilder1.GetErrorMessageHandler(True)
+
+        Dim nullNXOpen_BasePart As NXOpen.BasePart = Nothing
+
+        Dim objects2(-1) As NXOpen.NXObject
+        Dim attributePropertiesBuilder1 As NXOpen.AttributePropertiesBuilder = Nothing
+        attributePropertiesBuilder1 = theSession.AttributeManager.CreateAttributePropertiesBuilder(nullNXOpen_BasePart, objects2, NXOpen.AttributePropertiesBuilder.OperationType.None)
+
+        Dim objects3(-1) As NXOpen.NXObject
+        attributePropertiesBuilder1.SetAttributeObjects(objects3)
+
+        Dim objects4(0) As NXOpen.NXObject
+        objects4(0) = sourceobjects1(0)
+        attributePropertiesBuilder1.SetAttributeObjects(objects4)
+
+        attributePropertiesBuilder1.Title = "DB_PART_NAME"
+
+        attributePropertiesBuilder1.Category = "SO8_CAD"
+
+        attributePropertiesBuilder1.StringValue = partname
+
+        attributePropertiesBuilder1.Category = "SO8_CAD"
+
+        Dim changed1 As Boolean = Nothing
+        changed1 = attributePropertiesBuilder1.CreateAttribute()
+
+        Dim markId2 As NXOpen.Session.UndoMarkId = Nothing
+        markId2 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Invisible, "Nouvel élément")
+
+        theSession.DeleteUndoMark(markId2, Nothing)
+
+        Dim markId3 As NXOpen.Session.UndoMarkId = Nothing
+        markId3 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Invisible, "Nouvel élément")
+
+        fileNew1.MasterFileName = ""
+
+        fileNew1.MakeDisplayedPart = True
+
+        fileNew1.DisplayPartOption = NXOpen.DisplayPartOption.AllowAdditional
+
+        partOperationCreateBuilder1.ValidateLogicalObjectsToCommit()
+
+        Dim logicalobjects2(0) As NXOpen.PDM.LogicalObject
+        logicalobjects2(0) = logicalobjects1(0)
+        partOperationCreateBuilder1.CreateSpecificationsForLogicalObjects(logicalobjects2)
+
+        Dim errorMessageHandler2 As NXOpen.PDM.ErrorMessageHandler = Nothing
+        errorMessageHandler2 = partOperationCreateBuilder1.GetErrorMessageHandler(True)
+
+        Dim errorMessageHandler3 As NXOpen.PDM.ErrorMessageHandler = Nothing
+        errorMessageHandler3 = partOperationCreateBuilder1.GetErrorMessageHandler(True)
+
+        Dim nXObject2 As NXOpen.NXObject = Nothing
+        nXObject2 = fileNew1.Commit()
+
+        workPart = theSession.Parts.Work ' CAO000083658/AA-TEST
+        displayPart = theSession.Parts.Display ' CAO000083658/AA-TEST
+        Dim errorMessageHandler4 As NXOpen.PDM.ErrorMessageHandler = Nothing
+        errorMessageHandler4 = partOperationCreateBuilder1.GetErrorMessageHandler(True)
+
+        theSession.DeleteUndoMark(markId3, Nothing)
+
+        fileNew1.Destroy()
+
+        attributePropertiesBuilder1.Destroy()
+        Dim markId4 As NXOpen.Session.UndoMarkId = Nothing
+        markId4 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Invisible, "Delete")
+
+        theSession.UpdateManager.ClearErrorList()
+
+        Dim markId5 As NXOpen.Session.UndoMarkId = Nothing
+        markId5 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Delete")
+
+        Dim objects20(0) As NXOpen.TaggedObject
+        Dim datumCsys1 As NXOpen.Features.DatumCsys = CType(workPart.Features.FindObject("DATUM_CSYS(0)"), NXOpen.Features.DatumCsys)
+
+        objects20(0) = datumCsys1
+        Dim nErrs1 As Integer = Nothing
+        nErrs1 = theSession.UpdateManager.AddObjectsToDeleteList(objects20)
+
+        Dim id1 As NXOpen.Session.UndoMarkId = Nothing
+        id1 = theSession.NewestVisibleUndoMark
+
+        Dim nErrs2 As Integer = Nothing
+        nErrs2 = theSession.UpdateManager.DoUpdate(id1)
+
+        theSession.DeleteUndoMark(markId4, Nothing)
+
+        Return 0
+    End Function
 End Class
 
