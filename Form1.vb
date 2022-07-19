@@ -6,13 +6,13 @@ Imports NXOpen
 Imports NXOpen.UF
 Public Class Form1
 
-    Private Sub Button3_Click(sender As Object, e As EventArgs) Handles Button3.Click
+    Private Sub Button3_Click(sender As Object, e As EventArgs)
         Dim fd As FolderBrowserDialog = New FolderBrowserDialog()
         Dim strFolder As String
 
         If fd.ShowDialog() = DialogResult.OK Then
             strFolder = fd.SelectedPath
-            TextBox4.Text = strFolder
+            'TextBox4.Text = strFolder
         End If
 
     End Sub
@@ -115,7 +115,7 @@ Public Class Form1
             EndRng = boundArray(fileIndex)
 
 
-            Dim outputdir As String = TextBox4.Text
+            'Dim outputdir As String = TextBox4.Text
 
 
             Dim success As Integer
@@ -127,19 +127,19 @@ Public Class Form1
 
             If CheckBox3.Checked = True Then
                 'fileName = xlWorkSheet.Cells(StrtRng + 2, 5).value.ToString
-                fileName = tableSectioName((fileIndex - 1) / 2)
-                success = NewPart(filename)
+                fileName = "SQL_" & tableSectioName((fileIndex - 1) / 2)
+                success = NewPart(fileName, "Modèle")
             Else
 
                 If StrtRng = EndRng Then
                     fileName = "ANS-SD-"
                     SD += 1
-                    success = NewPart(filename & SD.ToString)
+                    success = NewPart(fileName & SD.ToString, "Modèle")
 
                 Else
                     fileName = "ANS-SC-"
                     CL += 1
-                    success = NewPart(filename & CL.ToString & ".prt")
+                    success = NewPart(fileName & CL.ToString & ".prt", "Modèle")
                 End If
 
             End If
@@ -152,7 +152,7 @@ Public Class Form1
 
 
 
-            SKBuilder(xlWorkSheet, StrtRng, EndRng)
+            SKBuilder(fileName, xlWorkSheet, StrtRng, EndRng)
 
         Next
 
@@ -160,7 +160,41 @@ Public Class Form1
 
         xlWorkBook.Close()
         xlApp.Quit()
-        If CheckBox2.Checked = True And CheckBox2.Enabled = True Then Call Create_Assembly(TextBox4.Text)
+        'If CheckBox2.Checked = True And CheckBox2.Enabled = True And CheckBox3.Checked = False Then Call Create_Assembly(TextBox4.Text)
+        If CheckBox2.Checked = True And CheckBox2.Enabled = True And CheckBox3.Checked = True Then
+            Dim ListOfParts() As NXOpen.BasePart = theSession.Parts.ToArray()
+            Array.Reverse(ListOfParts)
+            ReDim Preserve ListOfParts(ListOfParts.Length - 1)
+            Dim nbparts As Integer = ListOfParts.Length - 1
+            'Dim isFirst = True
+            For Each part In ListOfParts
+                Create_parent(part)
+
+            Next
+            ListOfParts = theSession.Parts.ToArray()
+
+            ReDim Preserve ListOfParts(nbparts)
+            Array.Reverse(ListOfParts)
+
+            For i = 0 To ListOfParts.Length - 1 Step 2
+                Dim comp1 As BasePart = ListOfParts(i)
+                Dim comp2 As BasePart = ListOfParts(i + 1)
+                Create_Assembly(comp1, comp2)
+
+            Next
+
+
+            ListOfParts = theSession.Parts.ToArray()
+            ReDim Preserve ListOfParts((nbparts + 1) / 2 - 1)
+            Array.Reverse(ListOfParts)
+
+
+
+            Create_Master(ListOfParts)
+
+
+
+        End If
 
 
         Label4.Visible = False
@@ -223,13 +257,13 @@ Public Class Form1
 
         If System.IO.File.Exists(configfilepath) Then 'le fichier existe on remplit le form
             Dim sr As New System.IO.StreamReader(configfilepath)
-            Dim configr(8) As String
+            Dim configr(7) As String
 
 
             TextBox1.Text = sr.ReadLine()
             TextBox2.Text = sr.ReadLine()
             TextBox3.Text = sr.ReadLine()
-            TextBox4.Text = sr.ReadLine()
+            'TextBox4.Text = sr.ReadLine()
             TextBox5.Text = sr.ReadLine()
             TextBox6.Text = sr.ReadLine()
             CheckBox1.Checked = sr.ReadLine()
@@ -246,19 +280,19 @@ Public Class Form1
         Dim sw As New System.IO.StreamWriter(configfilepath) 'le fichier est ensuite sauvegardé
         Dim i As Integer
         sw.Flush()
-        Dim configw(8) As String
+        Dim configw(7) As String
         configw(0) = TextBox1.Text
         configw(1) = TextBox2.Text
         configw(2) = TextBox3.Text
-        configw(3) = TextBox4.Text
-        configw(4) = TextBox5.Text
-        configw(5) = TextBox6.Text
-        configw(6) = CheckBox1.Checked.ToString
-        configw(7) = CheckBox2.Checked.ToString
-        configw(8) = CheckBox3.Checked.ToString
+        'configw(3) = TextBox4.Text
+        configw(3) = TextBox5.Text
+        configw(4) = TextBox6.Text
+        configw(5) = CheckBox1.Checked.ToString
+        configw(6) = CheckBox2.Checked.ToString
+        configw(7) = CheckBox3.Checked.ToString
 
 
-        For i = 0 To 8
+        For i = 0 To 7
             sw.WriteLine(configw(i))
         Next
         sw.Close()
@@ -284,10 +318,12 @@ Public Class Form1
 
     End Sub
 
-    Private Sub TextBox4_TextChanged(sender As Object, e As EventArgs) Handles TextBox4.TextChanged
+    Private Sub TextBox4_TextChanged(sender As Object, e As EventArgs)
 
     End Sub
-    Function NewPart(partname As String)
+    Function NewPart(partname As String, parttype As String)
+        'parttype = "Modèle"
+        'dim test As String = "changed"
         Dim markId1 As NXOpen.Session.UndoMarkId = Nothing
         markId1 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Départ")
 
@@ -298,7 +334,7 @@ Public Class Form1
 
         fileNew1.UseBlankTemplate = False
 
-        fileNew1.ApplicationName = "ModelTemplate"
+        If parttype = "Modèle" Then fileNew1.ApplicationName = "ModelTemplate" Else fileNew1.ApplicationName = "AssemblyTemplate"
 
         fileNew1.Units = NXOpen.Part.Units.Millimeters
 
@@ -308,7 +344,7 @@ Public Class Form1
 
         fileNew1.TemplateType = NXOpen.FileNewTemplateType.Item
 
-        fileNew1.TemplatePresentationName = "Modèle"
+        fileNew1.TemplatePresentationName = parttype
 
         fileNew1.ItemType = "SO8_CAD"
 
@@ -339,6 +375,9 @@ Public Class Form1
         sourceobjects2 = logicalobjects1(0).GetUserAttributeSourceObjects()
 
         partOperationCreateBuilder1.SetOperationSubType(NXOpen.PDM.PartOperationCreateBuilder.OperationSubType.FromTemplate)
+
+        Dim sourceobjects3() As NXOpen.NXObject
+        sourceobjects3 = logicalobjects1(0).GetUserAttributeSourceObjects()
 
         theSession.SetUndoMarkName(markId1, "Boîte de dialogue Nouvel élément")
 
@@ -412,6 +451,7 @@ Public Class Form1
 
         Dim nXObject2 As NXOpen.NXObject = Nothing
         nXObject2 = fileNew1.Commit()
+
 
         workPart = theSession.Parts.Work ' CAO000083658/AA-TEST
         displayPart = theSession.Parts.Display ' CAO000083658/AA-TEST
