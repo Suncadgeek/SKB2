@@ -128,18 +128,18 @@ Public Class Form1
             If CheckBox3.Checked = True Then
                 'fileName = xlWorkSheet.Cells(StrtRng + 2, 5).value.ToString
                 fileName = tableSectioName((fileIndex - 1) / 2)
-                success = NewPart(filename)
+                success = NewPart(fileName)
             Else
 
                 If StrtRng = EndRng Then
                     fileName = "ANS-SD-"
                     SD += 1
-                    success = NewPart(filename & SD.ToString)
+                    success = NewPart(fileName & SD.ToString)
 
                 Else
                     fileName = "ANS-SC-"
                     CL += 1
-                    success = NewPart(filename & CL.ToString & ".prt")
+                    success = NewPart(fileName & CL.ToString & ".prt")
                 End If
 
             End If
@@ -162,7 +162,7 @@ Public Class Form1
         xlApp.Quit()
         If CheckBox2.Checked = True And CheckBox2.Enabled = True Then Call Create_Assembly(TextBox4.Text)
 
-
+        If CheckBox4.Checked = True Then Godmode()
         Label4.Visible = False
         MsgBox("Opération terminée")
         Close()
@@ -199,6 +199,7 @@ Public Class Form1
             TextBox5.Enabled = True
             CheckBox2.Enabled = True
             CheckBox3.Enabled = True
+            CheckBox4.Enabled = True
         Else
             GroupBox1.Enabled = True
             GroupBox2.Enabled = False
@@ -206,6 +207,7 @@ Public Class Form1
             CheckBox2.Enabled = False
             CheckBox2.Checked = False
             CheckBox3.Enabled = False
+            CheckBox4.Enabled = False
         End If
     End Sub
 
@@ -223,7 +225,7 @@ Public Class Form1
 
         If System.IO.File.Exists(configfilepath) Then 'le fichier existe on remplit le form
             Dim sr As New System.IO.StreamReader(configfilepath)
-            Dim configr(8) As String
+            Dim configr(9) As String
 
 
             TextBox1.Text = sr.ReadLine()
@@ -235,6 +237,7 @@ Public Class Form1
             CheckBox1.Checked = sr.ReadLine()
             CheckBox2.Checked = sr.ReadLine()
             CheckBox3.Checked = sr.ReadLine()
+            CheckBox4.Checked = sr.ReadLine()
 
             sr.Close()
 
@@ -246,7 +249,7 @@ Public Class Form1
         Dim sw As New System.IO.StreamWriter(configfilepath) 'le fichier est ensuite sauvegardé
         Dim i As Integer
         sw.Flush()
-        Dim configw(8) As String
+        Dim configw(9) As String
         configw(0) = TextBox1.Text
         configw(1) = TextBox2.Text
         configw(2) = TextBox3.Text
@@ -256,9 +259,10 @@ Public Class Form1
         configw(6) = CheckBox1.Checked.ToString
         configw(7) = CheckBox2.Checked.ToString
         configw(8) = CheckBox3.Checked.ToString
+        configw(9) = CheckBox4.Checked.ToString
 
 
-        For i = 0 To 8
+        For i = 0 To 9
             sw.WriteLine(configw(i))
         Next
         sw.Close()
@@ -274,13 +278,16 @@ Public Class Form1
         Call Write_config()
     End Sub
 
-    Private Sub CheckBox3_CheckedChanged(sender As Object, e As EventArgs) Handles CheckBox3.CheckedChanged
+    Private Sub CheckBox3_CheckedChanged(sender As Object, e As EventArgs) Handles CheckBox3.CheckedChanged, CheckBox4.CheckedChanged
         If CheckBox3.Checked = True Then TextBox5.Enabled = False Else TextBox5.Enabled = True
         If CheckBox3.Checked = False Then TextBox6.Enabled = False Else TextBox6.Enabled = True
+        If CheckBox4.Checked = True Then CheckBox2.Checked = False
+        If CheckBox4.Checked = True Then CheckBox3.Checked = True
+
     End Sub
 
     Private Sub CheckBox2_CheckedChanged(sender As Object, e As EventArgs) Handles CheckBox2.CheckedChanged
-        'If CheckBox2.Checked = False Then TextBox5.Enabled = True Else TextBox5.Enabled = False
+        If CheckBox2.Checked = True Then CheckBox4.Checked = False
 
     End Sub
 
@@ -289,10 +296,10 @@ Public Class Form1
     End Sub
     Function NewPart(partname As String)
         Dim markId1 As NXOpen.Session.UndoMarkId = Nothing
-        markId1 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Départ")
+        markId1 = _3DBuilderFork.the3DSession.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Départ")
 
         Dim fileNew1 As NXOpen.FileNew = Nothing
-        fileNew1 = theSession.Parts.FileNew()
+        fileNew1 = _3DBuilderFork.the3DSession.Parts.FileNew()
 
         fileNew1.TemplateFileName = "@DB/000120/A"
 
@@ -317,7 +324,7 @@ Public Class Form1
         fileNew1.SetCanCreateAltrep(False)
 
         Dim partOperationCreateBuilder1 As NXOpen.PDM.PartOperationCreateBuilder = Nothing
-        partOperationCreateBuilder1 = theSession.PdmSession.CreateCreateOperationBuilder(NXOpen.PDM.PartOperationBuilder.OperationType.Create)
+        partOperationCreateBuilder1 = _3DBuilderFork.the3DSession.PdmSession.CreateCreateOperationBuilder(NXOpen.PDM.PartOperationBuilder.OperationType.Create)
 
         fileNew1.SetPartOperationCreateBuilder(partOperationCreateBuilder1)
 
@@ -327,7 +334,7 @@ Public Class Form1
 
         partOperationCreateBuilder1.SetItemType("SO8_CAD")
 
-        Dim logicalobjects1() As NXOpen.PDM.LogicalObject
+        Dim logicalobjects1() As NXOpen.PDM.LogicalObject = Nothing
         partOperationCreateBuilder1.CreateLogicalObjects(logicalobjects1)
 
         Dim sourceobjects1() As NXOpen.NXObject
@@ -340,7 +347,7 @@ Public Class Form1
 
         partOperationCreateBuilder1.SetOperationSubType(NXOpen.PDM.PartOperationCreateBuilder.OperationSubType.FromTemplate)
 
-        theSession.SetUndoMarkName(markId1, "Boîte de dialogue Nouvel élément")
+        _3DBuilderFork.the3DSession.SetUndoMarkName(markId1, "Boîte de dialogue Nouvel élément")
 
         Dim attributetitles1(0) As String
         attributetitles1(0) = "DB_PART_NO"
@@ -364,7 +371,7 @@ Public Class Form1
 
         Dim objects2(-1) As NXOpen.NXObject
         Dim attributePropertiesBuilder1 As NXOpen.AttributePropertiesBuilder = Nothing
-        attributePropertiesBuilder1 = theSession.AttributeManager.CreateAttributePropertiesBuilder(nullNXOpen_BasePart, objects2, NXOpen.AttributePropertiesBuilder.OperationType.None)
+        attributePropertiesBuilder1 = _3DBuilderFork.the3DSession.AttributeManager.CreateAttributePropertiesBuilder(nullNXOpen_BasePart, objects2, NXOpen.AttributePropertiesBuilder.OperationType.None)
 
         Dim objects3(-1) As NXOpen.NXObject
         attributePropertiesBuilder1.SetAttributeObjects(objects3)
@@ -385,12 +392,12 @@ Public Class Form1
         changed1 = attributePropertiesBuilder1.CreateAttribute()
 
         Dim markId2 As NXOpen.Session.UndoMarkId = Nothing
-        markId2 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Invisible, "Nouvel élément")
+        markId2 = _3DBuilderFork.the3DSession.SetUndoMark(NXOpen.Session.MarkVisibility.Invisible, "Nouvel élément")
 
-        theSession.DeleteUndoMark(markId2, Nothing)
+        _3DBuilderFork.the3DSession.DeleteUndoMark(markId2, Nothing)
 
         Dim markId3 As NXOpen.Session.UndoMarkId = Nothing
-        markId3 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Invisible, "Nouvel élément")
+        markId3 = _3DBuilderFork.the3DSession.SetUndoMark(NXOpen.Session.MarkVisibility.Invisible, "Nouvel élément")
 
         fileNew1.MasterFileName = ""
 
@@ -413,38 +420,38 @@ Public Class Form1
         Dim nXObject2 As NXOpen.NXObject = Nothing
         nXObject2 = fileNew1.Commit()
 
-        workPart = theSession.Parts.Work ' CAO000083658/AA-TEST
-        displayPart = theSession.Parts.Display ' CAO000083658/AA-TEST
+        workPart = _3DBuilderFork.the3DSession.Parts.Work ' CAO000083658/AA-TEST
+        displayPart = _3DBuilderFork.the3DSession.Parts.Display ' CAO000083658/AA-TEST
         Dim errorMessageHandler4 As NXOpen.PDM.ErrorMessageHandler = Nothing
         errorMessageHandler4 = partOperationCreateBuilder1.GetErrorMessageHandler(True)
 
-        theSession.DeleteUndoMark(markId3, Nothing)
+        _3DBuilderFork.the3DSession.DeleteUndoMark(markId3, Nothing)
 
         fileNew1.Destroy()
 
         attributePropertiesBuilder1.Destroy()
         Dim markId4 As NXOpen.Session.UndoMarkId = Nothing
-        markId4 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Invisible, "Delete")
+        markId4 = _3DBuilderFork.the3DSession.SetUndoMark(NXOpen.Session.MarkVisibility.Invisible, "Delete")
 
-        theSession.UpdateManager.ClearErrorList()
+        _3DBuilderFork.the3DSession.UpdateManager.ClearErrorList()
 
         Dim markId5 As NXOpen.Session.UndoMarkId = Nothing
-        markId5 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Delete")
+        markId5 = _3DBuilderFork.the3DSession.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Delete")
 
         Dim objects20(0) As NXOpen.TaggedObject
         Dim datumCsys1 As NXOpen.Features.DatumCsys = CType(workPart.Features.FindObject("DATUM_CSYS(0)"), NXOpen.Features.DatumCsys)
 
         objects20(0) = datumCsys1
         Dim nErrs1 As Integer = Nothing
-        nErrs1 = theSession.UpdateManager.AddObjectsToDeleteList(objects20)
+        nErrs1 = _3DBuilderFork.the3DSession.UpdateManager.AddObjectsToDeleteList(objects20)
 
         Dim id1 As NXOpen.Session.UndoMarkId = Nothing
-        id1 = theSession.NewestVisibleUndoMark
+        id1 = _3DBuilderFork.the3DSession.NewestVisibleUndoMark
 
         Dim nErrs2 As Integer = Nothing
-        nErrs2 = theSession.UpdateManager.DoUpdate(id1)
+        nErrs2 = _3DBuilderFork.the3DSession.UpdateManager.DoUpdate(id1)
 
-        theSession.DeleteUndoMark(markId4, Nothing)
+        _3DBuilderFork.the3DSession.DeleteUndoMark(markId4, Nothing)
 
         Return 0
     End Function
