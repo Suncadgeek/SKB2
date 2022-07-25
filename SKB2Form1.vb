@@ -127,7 +127,7 @@ Public Class Form1
 
             If CheckBox3.Checked = True Then
                 'fileName = xlWorkSheet.Cells(StrtRng + 2, 5).value.ToString
-                fileName = "SQL_" & tableSectioName((fileIndex - 1) / 2)
+                fileName = tableSectioName((fileIndex - 1) / 2) & "_SQL"
                 success = NewPart(fileName, "Modèle")
             Else
 
@@ -168,10 +168,16 @@ Public Class Form1
             Dim nbparts As Integer = ListOfParts.Length - 1
             'Dim isFirst = True
             For Each part In ListOfParts
-                Create_parent(part)
+                Create_parent(Create_parent(part, True), False)
 
             Next
             ListOfParts = theSession.Parts.ToArray()
+
+            Dim it As Integer
+
+            For it = 0 To nbparts
+                ListOfParts(it) = ListOfParts(it * 2)
+            Next
 
             ReDim Preserve ListOfParts(nbparts)
             Array.Reverse(ListOfParts)
