@@ -168,8 +168,12 @@ Public Class Form1
             Dim nbparts As Integer = ListOfParts.Length - 1
             'Dim isFirst = True
             For Each part In ListOfParts
-                Create_parent(Create_parent(part, True), False)
-
+                'Create_parent(Create_parent(part, True), False)
+                Dim mag_ens As Part = Create_parent(part, True)
+                Dim section_ens As Part = Create_parent(part, False)
+                'MsgBox("mag_ens is " & mag_ens.Name)
+                'MsgBox("section_ens is " & section_ens.Name)
+                import_mag(section_ens, mag_ens)
             Next
             ListOfParts = theSession.Parts.ToArray()
 
@@ -369,7 +373,7 @@ Public Class Form1
 
         partOperationCreateBuilder1.SetItemType("SO8_CAD")
 
-        Dim logicalobjects1() As NXOpen.PDM.LogicalObject
+        Dim logicalobjects1() As NXOpen.PDM.LogicalObject = Nothing
         partOperationCreateBuilder1.CreateLogicalObjects(logicalobjects1)
 
         Dim sourceobjects1() As NXOpen.NXObject
