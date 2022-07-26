@@ -169,36 +169,68 @@ Public Class Form1
             'Dim isFirst = True
             For Each part In ListOfParts
                 'Create_parent(Create_parent(part, True), False)
-                Dim mag_ens As Part = Create_parent(part, True)
+
+
                 Dim section_ens As Part = Create_parent(part, False)
-                'MsgBox("mag_ens is " & mag_ens.Name)
-                'MsgBox("section_ens is " & section_ens.Name)
-                import_mag(section_ens, mag_ens)
+
+                isEmptyMagnetPart = True
+                For Each tempfeature As Features.Feature In part.Features
+                    If tempfeature.FeatureType.ToString = "DATUM_CSYS" And InStr(1, tempfeature.Name, "Entrée", 1) = 0 And InStr(1, tempfeature.Name, "Sortie", 1) = 0 And InStr(1, tempfeature.Name, "Drift", 1) = 0 And InStr(1, tempfeature.Name, "1/3", 1) = 0 And InStr(1, tempfeature.Name, "3/3", 1) = 0 Then
+                        isEmptyMagnetPart = False
+                    End If
+                Next
+
+                Dim mag_ens As Part = Nothing
+                If Not isEmptyMagnetPart Then
+                    mag_ens = Create_parent(part, True)
+
+                    import_mag(section_ens, mag_ens)
+                End If
             Next
             ListOfParts = theSession.Parts.ToArray()
+            Dim tmplist(10000) As BasePart
+            Dim it As Integer = 0
+            For Each part In ListOfParts
+                If InStr(part.Name, "SQL") = 0 And InStr(part.Name, "AIMANT") = 0 Then 'ni squelette ni ens aimant -> donc section
+                    If InStr(part.Name, "ARC") <> 0 Or InStr(part.Name, "SD") <> 0 Then
+                        tmplist(it) = part
+                        it += 1
+                    End If
+                End If
 
-            Dim it As Integer
-
-            For it = 0 To nbparts
-                ListOfParts(it) = ListOfParts(it * 2)
             Next
-
-            ReDim Preserve ListOfParts(nbparts)
+            ReDim Preserve tmplist(it - 1)
+            ReDim ListOfParts(it - 1)
+            ListOfParts = tmplist
+            'ReDim Preserve ListOfParts(nbparts)
             Array.Reverse(ListOfParts)
-
-            For i = 0 To ListOfParts.Length - 1 Step 2
+            'MsgBox("is is " & it)
+            For i = 0 To it - 2 Step 2
                 Dim comp1 As BasePart = ListOfParts(i)
                 Dim comp2 As BasePart = ListOfParts(i + 1)
                 Create_Assembly(comp1, comp2)
 
             Next
-
-
             ListOfParts = theSession.Parts.ToArray()
-            ReDim Preserve ListOfParts((nbparts + 1) / 2 - 1)
+            'MsgBox("so fa so good, ListOfParts part length is " & ListOfParts.Length)
+            ReDim tmplist(1000)
+            it = 0
+            For Each part In ListOfParts
+                If InStr(part.Name, "SQL") = 0 Then
+                    If InStr(part.Name, "AN-C") <> 0 Then
+                        tmplist(it) = part
+                        'MsgBox("added " & part.FullPath)
+                        it += 1
+                    End If
+                End If
+
+            Next
+            ReDim Preserve tmplist(it - 1)
+            ReDim ListOfParts(it - 1)
+            ListOfParts = tmplist
             Array.Reverse(ListOfParts)
 
-
+            'MsgBox("so fa so good, tmplist part length is " & ListOfParts.Length)
 
             Create_Master(ListOfParts)
 
